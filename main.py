@@ -38,6 +38,10 @@ class MapApp(QMainWindow):
         self.lon = 37.618423
         self.zoom = 10
 
+        # Предельные значения масштаба
+        self.min_zoom = 0
+        self.max_zoom = 21
+
         # Обновляем карту при запуске
         self.update_map()
 
@@ -56,6 +60,19 @@ class MapApp(QMainWindow):
             self.map_label.setPixmap(pixmap)
         else:
             self.map_label.setText("Ошибка при загрузке карты")
+
+    def keyPressEvent(self, event):
+        # Обработка нажатия клавиш PgUp и PgDown
+        if event.key() == Qt.Key.Key_PageUp:
+            self.zoom += 1
+            if self.zoom > self.max_zoom:
+                self.zoom = self.max_zoom
+            self.update_map()
+        elif event.key() == Qt.Key.Key_PageDown:
+            self.zoom -= 1
+            if self.zoom < self.min_zoom:
+                self.zoom = self.min_zoom
+            self.update_map()
 
 
 if __name__ == "__main__":
