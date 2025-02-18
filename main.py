@@ -6,7 +6,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 from dotenv import load_dotenv
 
-server_address = 'https://static-maps.yandex.ru/v1?'
+server_address = 'https://static-maps.yandex.ru/1.x/?'  # Исправленный адрес API
 
 path = os.path.join(os.path.dirname(__file__), '.env')
 if os.path.exists(path):
@@ -39,8 +39,19 @@ class MapApp(QMainWindow):
         self.zoom = 10
 
         # Предельные значения масштаба
-        self.min_zoom = 0
+        self.min_zoom = 1
         self.max_zoom = 21
+
+        # Предельные значения координат
+        self.min_lat = -85
+        self.max_lat = 85
+        self.min_lon = -180
+        self.max_lon = 180
+
+        # Параметры для геометрической прогрессии
+        self.initial_step = 10
+        self.final_step = 0.00001
+        self.progression_ratio = (self.final_step / self.initial_step) ** (1 / (self.max_zoom - 1))
 
         # Обновляем карту при запуске
         self.update_map()
@@ -61,6 +72,10 @@ class MapApp(QMainWindow):
         else:
             self.map_label.setText("Ошибка при загрузке карты")
 
+    def get_move_step(self):
+        # Вычисляем шаг перемещения по формуле геометрической прогрессии
+        return self.initial_step * (self.progression_ratio ** (self.zoom - 1))
+
     def keyPressEvent(self, event):
         # Обработка нажатия клавиш PgUp и PgDown
         if event.key() == Qt.Key.Key_PageUp:
@@ -72,6 +87,28 @@ class MapApp(QMainWindow):
             self.zoom -= 1
             if self.zoom < self.min_zoom:
                 self.zoom = self.min_zoom
+            self.update_map()
+        # Обработка клавиш вверх/вниз/вправо/влево
+        move_step = self.get_move_step()  # Получаем текущий шаг перемещения
+        if event.key() == Qt.Key.Key_Up:
+            self.lat += move_step
+            if self.lat > self.max_lat:
+                self.lat = self.max_lat
+            self.update_map()
+        elif event.key() == Qt.Key.Key_Down:
+            self.lat -= move_step
+            if self.lat < self.min_lat:
+                self.lat = self.min_lat
+            self.update_map()
+        elif event.key() == Qt.Key.Key_Left:
+            self.lon -= move_step
+            if self.lon < self.min_lon:
+                self.lon = self.min_lon
+            self.update_map()
+        elif event.key() == Qt.Key.Key_Right:
+            self.lon += move_step
+            if self.lon > self.max_lon:
+                self.lon = self.max_lon
             self.update_map()
 
 
